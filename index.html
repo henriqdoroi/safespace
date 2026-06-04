@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeSpace Bot</title>
+
+  <!-- Icon Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" />
+
+<script
+  src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+  data-utmify-prevent-xcod-sck
+  data-utmify-prevent-subids
+  async
+  defer
+></script>
+
+  <!-- ESTILOS -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: "Sora", sans-serif;
+    }
+
+    /* Barra de Usuário */
+    .user-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 84px;
+      width: 100vw;
+      z-index: 9999;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .user-bar .avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid white;
+    }
+
+    .user-bar .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .user-bar .name {
+      font-size: 17px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .user-bar .status {
+      display: block;
+      font-size: 13px;
+      font-weight: 400;
+      color: #555;
+    }
+
+    .balance-badge {
+      margin-left: auto;
+      margin-right: 40px;
+      background: #ffffff;
+      color: #0283fa;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #e3e3e3;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .balance-badge .value {
+      font-weight: 800;
+    }
+
+    /* Ajuste do Typebot abaixo da barra */
+    typebot-standard {
+      position: absolute;
+      top: 84px;
+      left: 0;
+      width: 100vw;
+      height: calc(100vh - 84px);
+      display: block;
+      z-index: 1;
+    }
+    /* ——— POPUP de saldo ——— */
+.cash-pop-overlay{
+  position:fixed; inset:0; z-index:100000;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.35);
+}
+.cash-pop{
+  width:min(45vw, 420px);
+  background:#fff; border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.18);
+  padding:22px 20px 12px;
+  text-align:center;
+  font-family: "Sora", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
+.cash-pop .icon{
+  width:72px; height:72px; margin:0 auto 10px;
+  border-radius:50%; border:2px solid #d9f5e3;
+  display:grid; place-items:center; color:#22c55e;
+}
+.cash-pop .icon svg{ width:38px; height:38px; }
+.cash-pop .title{ font-size:22px; font-weight:700; color:#222; margin:4px 0 8px; }
+.cash-pop .desc{ font-size:15px; color:#555; }
+.cash-pop .desc b{ color:#16a34a; }
+
+/* Overlay + container */
+.pulse-pop__overlay{
+  position:fixed; inset:0; z-index:100000;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.35);
+}
+.pulse-pop{
+  width:min(45vw,420px);
+  background:#fff; border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.18);
+  padding:20px 22px;
+  text-align:center;
+  font-family:"Sora",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  animation: popIn .28s ease-out;
+}
+@keyframes popIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* SVG + animações */
+.pulse-pop__anim{
+  width:84px; height:84px; margin:4px auto 10px;
+  display:block;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.02));
+}
+.pulse-pop__ring{
+  stroke:#d7f5e5; stroke-width:8; fill:none;
+}
+.pulse-pop__circle{
+  stroke:#86efac; stroke-width:8; fill:none;
+  stroke-linecap:round;
+  stroke-dasharray: 339;     /* ~ 2πr (r=54) */
+  stroke-dashoffset: 339;    /* começa “zerado” */
+  animation: drawCircle 900ms ease-out forwards 100ms; /* desenha */
+}
+@keyframes drawCircle { to { stroke-dashoffset: 0; } }
+
+.pulse-pop__check{
+  stroke:#22c55e; stroke-width:10; fill:none;
+  stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray: 100;    /* comprimento aprox. do path */
+  stroke-dashoffset: 100;   /* começa escondido */
+  animation: drawCheck 650ms ease-out forwards 700ms;  /* aparece após o círculo */
+}
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+/* pulse suave quando conclui */
+.pulse-pop.pulsing .pulse-pop__anim{
+  animation: pulseOnce 600ms ease-out 1 900ms;
+}
+@keyframes pulseOnce{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+  100%{transform:scale(1)}
+}
+
+/* textos */
+.pulse-pop__title{
+  font-size:22px; font-weight:700; color:#222; margin:6px 0 6px;
+}
+.pulse-pop__desc{ font-size:15px; color:#555 }
+.pulse-pop__desc b{ color:#16a34a }
+
+  </style>
+<!-- TYPEBOT SDK -->
+<script type="module">
+  import Typebot from 'https://cdn.jsdelivr.net/npm/@typebot.io/js@0.3.78/dist/web.js';
+
+  Typebot.initStandard({
+    typebot: "rodando-front-txw1cst",
+    apiHost: "https://typebot.co/",
+    onReply: (reply) => {
+      console.log("Resposta recebida:", reply);
+
+      // Exemplo: se a resposta foi botão (choice)
+      if (reply.type === "choice" && ["OK", "like", "não", "start now", "começar", "iniciar"].includes(reply.value)) {
+        awardAndNotify(10); // sobe +$10 no badge
+      }
+    }
+  });
+</script>
+
+</head>
+
+<body>
+  <div id="__next"></div>
+
+  <typebot-standard></typebot-standard>
+
+  <!-- BARRA + BALANCE -->
+  <script>
+    function criarBarra() {
+      const userBar = document.createElement("div");
+      userBar.className = "user-bar";
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.innerHTML = '<img src="https://i.postimg.cc/qvxDF16Q/408207393-756230416541599-2177493566915936860-n.jpg" alt="Bruna">';
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.innerHTML = `
+  <span style="display: inline-flex; align-items: center; gap: 5px;">
+    Meta
+    <img src="https://s3.typebot.io/public/workspaces/clrftlh3e000liottr58eljzz/typebots/cm2b7ycac001f10ukcmobe5ii/blocks/qxebuu2yjx74a20336ymgdcj?v=1757351974123" alt="Verified" width="18" height="18" style="vertical-align: middle;" />
+  </span>
+  <div class="status">Support</div>
+`;
+
+
+      const balance = document.createElement("span");
+      balance.className = "balance-badge";
+      balance.innerHTML = `
+        <i class="fa fa-usd" aria-hidden="true"></i>
+        <span class="label">Balance</span>
+        <span class="value">$0.00</span>
+      `;
+
+      userBar.appendChild(avatar);
+      userBar.appendChild(name);
+      userBar.appendChild(balance);
+
+      const container = document.querySelector("#__next");
+      if (container) container.appendChild(userBar);
+    }
+
+    criarBarra();
+    window.addEventListener("DOMContentLoaded", () => {
+  // Espera um pouquinho pra dar "efeito visual"
+  setTimeout(() => {
+    awardAndNotify(22.39);
+  }, 1000);
+});
+
+
+
+  </script>
+  <script>
+  // Sobe +$10 quando o lead clicar no primeiro botão do grupo
+  (function attachTypebotAwardOnClick(){
+    const host = document.querySelector('typebot-standard');
+    if (!host) return;
+
+    function ready(){
+      const root = host.shadowRoot;
+      const chat = root && root.querySelector('.typebot-chat-view');
+      if (!chat) { setTimeout(ready, 200); return; }
+
+      let awarded = false;
+
+      // Delegação de clique para botões dentro do Typebot
+      chat.addEventListener('click', (e) => {
+        if (awarded) return;
+
+        const btn =
+          e.target.closest('button, [role="button"], .typebot-button, .btn, .button');
+        if (!btn) return;
+
+        const label = (btn.textContent || '').trim().toLowerCase();
+
+        // Ajuste as labels que devem disparar a recompensa
+        const gatilhos = ['ok', 'like', 'não', 'start now', 'começar', 'iniciar'];
+
+        if (gatilhos.some(g => label.includes(g))) {
+          awarded = true;
+          awardAndNotify(10, { reason: 'button_click', label });
+        }
+      });
+
+      // Fallback: se por algum motivo o clique não for capturado,
+      // detecta a criação da bolha de resposta do usuário e premia uma vez.
+      const obs = new MutationObserver(() => {
+        if (awarded) return;
+        const lastGuest =
+          chat.querySelector('.items-end.typebot-guest-bubble:last-child');
+        if (lastGuest) {
+          awarded = true;
+          awardAndNotify(10, { reason: 'guest_bubble_detected' });
+        }
+      });
+      obs.observe(chat, { childList: true, subtree: true });
+    }
+
+    // aguarda o web component montar
+    if (host.shadowRoot) ready();
+    else host.addEventListener('ready', ready, { once: true });
+  })();
+</script>
+
+
+  <!-- LÓGICA DO BALANCE -->
+  <script>
+    function getBalanceEl() {
+      return document.querySelector('.balance-badge .value');
+    }
+
+    function parseMoney(txt) {
+      txt = (txt || '').replace(/[^\d,.\-]/g, '').replace(',', '.');
+      const n = parseFloat(txt);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function formatUSD(n) {
+      return `$${n.toFixed(2)}`;
+    }
+
+// === Contador lento estilo antigo ===
+function animateCount(from, to, TOTAL_MS = 11000) { // ← ajuste aqui (ex.: 7000–10000 ms)
+  const el = getBalanceEl();
+  if (!el) return;
+
+  const fps = 30;                 // quantas atualizações por segundo
+  const STEP_MS = 70 / fps;     // intervalo entre steps
+  const steps = Math.max(1, Math.round(TOTAL_MS / STEP_MS));
+  const delta = (to - from) / steps;
+
+  let i = 0, curr = from;
+  const timer = setInterval(() => {
+    i++;
+    curr += delta;
+    // trava em 2 casas sempre
+    el.textContent = formatUSD(Math.floor(curr * 100) / 100);
+    if (i >= steps) {
+      clearInterval(timer);
+      el.textContent = formatUSD(to);
+    }
+  }, STEP_MS);
+}
+
+
+    function spawnCashParticles(amount = 4, count = 6) {
+      // (Opcional: Adicione animações visuais aqui se quiser)
+    }
+
+    function awardAndNotify(amount = 4) {
+      const el = getBalanceEl();
+      if (!el) return;
+      const current = parseMoney(el.textContent);
+      const next = current + amount;
+
+      spawnCashParticles(amount);
+      animateCount(current, next, 800);
+    }
+
+    window.addEventListener('message', (ev) => {
+      if (ev?.data?.event !== 'lead:awarded') return;
+      const { amount = 4 } = ev.data.payload || {};
+      awardAndNotify(amount);
+    });
+  </script>
+  
+<script>
+// 🔊 SOM DE CASH (pré-carregado + desbloqueio no 1º toque)
+const cashSfx = new Audio('/type/correct.mp3');
+cashSfx.preload = 'auto';
+cashSfx.volume  = 0.75;
+window.addEventListener('pointerdown', () => {
+  cashSfx.play().then(()=>{ cashSfx.pause(); cashSfx.currentTime = 0; }).catch(()=>{});
+}, { once:true });
+
+/**
+ * Popup animado (círculo + check + pulse)
+ * @param {number} amount   valor recebido (ex.: 41 -> +$41.00)
+ * @param {number} duration ms de exibição; se null, não fecha automaticamente
+ * @param {boolean} showBar mostrar barra de tempo (ESQ → DIR)
+ */
+function showPulseCash(amount=10, duration=2200, showBar=true){
+  // overlay + container
+  const overlay = document.createElement('div');
+  overlay.className = 'pulse-pop__overlay';
+  const pop = document.createElement('div');
+  pop.className = 'pulse-pop pulsing';
+
+  // SVG animado (círculo desenhando + check)
+  pop.innerHTML = `
+    <svg class="pulse-pop__anim" viewBox="0 0 120 120">
+      <circle class="pulse-pop__ring"   cx="60" cy="60" r="54"></circle>
+      <circle class="pulse-pop__circle" cx="60" cy="60" r="54"></circle>
+      <path   class="pulse-pop__check"  d="M40 62 L55 77 L85 45"></path>
+    </svg>
+    <div class="pulse-pop__title">Balance updated.</div>
+    <div class="pulse-pop__desc">
+      You received: <b>+$${amount.toFixed(2)}</b>
+    </div>
+    ${ showBar ? `
+      <div class="pulse-pop__bar"><div class="pulse-pop__bar-fill"></div></div>
+    ` : ``}
+  `;
+  
+  overlay.appendChild(pop);
+  document.body.appendChild(overlay);
+
+  // 🔊 TOCAR SOM: escolha 1 das linhas abaixo (deixe só uma)
+  try { cashSfx.currentTime = 0; cashSfx.play(); } catch(e){}                 // imediato
+  // setTimeout(() => { try { cashSfx.currentTime = 0; cashSfx.play(); } catch(e){} }, 750); // sincronizado com ✓
+
+  // progress bar esquerda → direita
+  if (showBar && typeof duration === 'number') {
+    const fill = pop.querySelector('.pulse-pop__bar-fill');
+    requestAnimationFrame(()=>{
+      fill.style.transitionDuration = `${duration}ms`;
+      fill.style.width = '100%';
+    });
+  }
+
+  // fechar automático no fim (se duration for número)
+  function close(){
+    overlay.style.transition = 'opacity .25s ease';
+    overlay.style.opacity = '0';
+    setTimeout(()=> overlay.remove(), 250);
+  }
+  if (typeof duration === 'number'){
+    setTimeout(close, Math.max(800, duration));
+  }
+
+  // fechar clicando fora
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  return { close, el: overlay };
+}
+
+/* — Integra o popup quando subir saldo — */
+(function patchAward(){
+  const _award = window.awardAndNotify;
+  window.awardAndNotify = function(amount=4, opts={}){
+    const res = _award ? _award(amount, opts) : null;
+    if (opts.popup !== false){
+      showPulseCash(amount, opts.popupMs ?? 2200, true);
+    }
+    return res;
+  };
+})();
+</script>
+
+
+
+
+</body>
+</html>
